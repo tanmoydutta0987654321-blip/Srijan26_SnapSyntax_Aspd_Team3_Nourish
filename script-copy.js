@@ -5,7 +5,9 @@
 'use strict';
 
 /* ── CONSTANTS ──────────────────────────────────────────── */
+const ORDER_KEY = 'nourish_order_v1';
 const CART_KEY = 'nourish_cart_v2';
+
 
 const ITEM_DATA = {
   'med-bowl':       { id:'med-bowl',       name:'Classic Mediterranean Bowl', desc:'Kale, Chickpeas, Quinoa & Hummus',            price:129, img:'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&q=80' },
@@ -322,26 +324,73 @@ function initPlanSelection() {
 }
 
 /* ── CHECKOUT ───────────────────────────────────────────── */
-function initCheckout() {
+function  initCheckout() {
   const btn = document.getElementById('checkoutBtn');
   if (!btn) return;
+
   btn.addEventListener('click', () => {
-    if (Cart.count() === 0) { toast('Your cart is empty!'); return; }
+    if (Cart.count() === 0) {
+      toast('Your cart is empty!');
+      return;
+    }
+
     btn.textContent = '⏳ Placing order…';
     btn.disabled = true;
+
     setTimeout(() => {
       btn.textContent = '✓ Order Placed!';
       btn.style.background = '#059669';
       toast('🎉 Order placed! You can now track it live.');
+
+      // ✅ CREATE ORDER
+      const cart = Cart.get();
+      const order = {
+        items: cart,
+        step: 0
+      };
+
+      localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+
+      // ✅ CLEAR CART
+      localStorage.removeItem(CART_KEY);
+      UI.refreshCart();
+
+      // ✅ RESET TRACKING
+      trackingStep = 0;
+
       setTimeout(() => {
         Nav.go('tracking');
+        applyTrackingStep(trackingStep);
+
+        // reset button
         btn.textContent = 'Proceed to Checkout →';
         btn.style.background = '';
         btn.disabled = false;
+
       }, 1200);
+
     }, 1600);
   });
-}
+}// {
+//   const btn = document.getElementById('checkoutBtn');
+//   if (!btn) return;
+//   btn.addEventListener('click', () => {
+//     if (Cart.count() === 0) { toast('Your cart is empty!'); return; }
+//     btn.textContent = '⏳ Placing order…';
+//     btn.disabled = true;
+//     setTimeout(() => {
+//       btn.textContent = '✓ Order Placed!';
+//       btn.style.background = '#059669';
+//       toast('🎉 Order placed! You can now track it live.');
+//       setTimeout(() => {
+//         Nav.go('tracking');
+//         btn.textContent = 'Proceed to Checkout →';
+//         btn.style.background = '';
+//         btn.disabled = false;
+//       }, 1200);
+//     }, 1600);
+//   });
+// }
 
 /* ── UPSELL CHIPS ───────────────────────────────────────── */
 function initUpsellChips() {
@@ -363,7 +412,7 @@ function initKitchenCards() {
 }
 
 /* ── ORDER TRACKING ─────────────────────────────────────── */
-let trackingStep = 2; // 0=received 1=preparing 2=on-the-way 3=delivered
+let trackingStep = 0; // 0=received 1=preparing 2=on-the-way 3=delivered
 
 const stepMessages = [
   'Order received — preparing your meal now.',
@@ -419,16 +468,32 @@ function applyTrackingStep(step) {
 
 function initTracking() {
   const simBtn = document.getElementById('simulateBtn');
-  if (!simBtn) return;
 
-  // Apply initial state
+  // ✅ LOAD ORDER FROM STORAGE
+  const order = JSON.parse(localStorage.getItem(ORDER_KEY));
+
+  if (order) {
+    trackingStep = order.step || 0;
+  } else {
+    trackingStep = 0;
+  }
+
   applyTrackingStep(trackingStep);
+
+  if (!simBtn) return;
 
   simBtn.addEventListener('click', () => {
     if (trackingStep < 3) {
       trackingStep++;
+
+      // ✅ SAVE PROGRESS
+      const order = JSON.parse(localStorage.getItem(ORDER_KEY)) || {};
+      order.step = trackingStep;
+      localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+
       applyTrackingStep(trackingStep);
       toast(stepMessages[trackingStep]);
+
       if (trackingStep === 3) {
         simBtn.textContent = '✓ Order Delivered!';
         simBtn.disabled = true;
@@ -439,11 +504,17 @@ function initTracking() {
     }
   });
 
-  // Courier action buttons
+  // Buttons
   document.getElementById('msgBtn')?.addEventListener('click', () => toast('Opening chat with Rahul…'));
   document.getElementById('callBtn')?.addEventListener('click', () => toast('Calling Rahul Sharma…'));
   document.getElementById('helpBtn')?.addEventListener('click', () => toast('Connecting to support chat…'));
 }
+
+  // Courier action buttons
+//   document.getElementById('msgBtn')?.addEventListener('click', () => toast('Opening chat with Rahul…'));
+//   document.getElementById('callBtn')?.addEventListener('click', () => toast('Calling Rahul Sharma…'));
+//   document.getElementById('helpBtn')?.addEventListener('click', () => toast('Connecting to support chat…'));
+// }
 
 /* ── HERO BUTTONS ───────────────────────────────────────── */
 function initHeroButtons() {
