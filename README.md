@@ -9,7 +9,7 @@ Designed for students and working professionals who need quick, affordable, and 
 
 🚀 Live Demo
 
-(Add your GitHub Pages link here)
+(https://tanmoydutta0987654321-blip.github.io/Srijan26_SnapSyntax_Aspd_Team3_Nourish/)
 
 ---
 
